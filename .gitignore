@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+
+# Virtual environment
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+
+# mypy, pylint, etc.
+.mypy_cache/
+.pyre/
+.pytype/
+pylint-report.txt
+
+# FastAPI auto-generated docs cache (if any)
+__fastapi_docs__/
+
+# Environment variables
+.env
+.env.*
+
+# SQLite or local databases
+*.db
+*.sqlite3
+
+# Docker
+*.pid
+*.pid.lock
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Optional: VSCode launch config
+.vscode/launch.json
