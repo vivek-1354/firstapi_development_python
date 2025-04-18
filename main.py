@@ -1,14 +1,14 @@
 from typing import Optional
-from fastapi import FastAPI, HTTPException, status
-from fastapi.params import Body
+from fastapi import FastAPI, HTTPException, status, Depends
 from pydantic import BaseModel
-from uuid import uuid1 as u
-from dummy_data import post_data
-from uuid import uuid4 as u
-import psycopg2
-from psycopg2.extras import RealDictCursor
+from sqlalchemy.orm import Session
+from models import post_model
+from models.post_model import Post as Post_Schema
 
-password = "V1v2ekmr@"
+
+from database import engine, get_db
+
+post_model.Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI()
@@ -20,66 +20,55 @@ class Post(BaseModel):
     published:bool = True
     rating: Optional[int] = None
     
-while True:
-    try:
-        conn = psycopg2.connect(port=5434,host='localhost',database="fastapi", user="postgres",
-                                password="V1v2ekmr@", cursor_factory=RealDictCursor)
-        cursor = conn.cursor()
-        print("Database connection was successfull!")
-        break  
-    except Exception as error:
-        print("Failed to connect to database.")
-        print("error : ", error)
-        break
     
-def find_post_by_id(id):
-    cursor.execute("""SELECT * FROM posts WHERE post_id = %s """,(id,))
-    new_post = cursor.fetchone()
-    return new_post
-
-
 @app.get('/')
-async def root():
+def root():
     return {"message":f"Hello Welcome...."}
 
 @app.get('/posts')
-def get_posts():
-    query = "SELECT * FROM posts;"
-    cursor.execute(query)
-    products = cursor.fetchall()
-    return {"data":products}
+def get_posts(db:Session  = Depends(get_db)):
+    posts = db.query(Post_Schema).all()
+    return {"data" :posts}
 
 @app.get('/posts/{id}')
-def get_posts(id:int):
-    response = find_post_by_id(id)
+def get_posts(id:int, db:Session  = Depends(get_db)):
+    response = db.query(Post_Schema).get({"id":id})
     if response:
         return response
     raise HTTPException(status_code=404, detail="Post not found")
 
 @app.post('/posts', status_code=status.HTTP_201_CREATED)
-def create_post(post :Post):
-    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING * """,(post.title, post.content,post.published))
-    new_post = cursor.fetchone()
-    conn.commit()
+def create_post(post :Post, db:Session  = Depends(get_db)):
+    # new_post = Post_Schema(
+    #     title=post.title, content=post.content, published=post.published, rating=post.rating)
+    new_post = Post_Schema(**post.dict())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return {"message" : "successfully created.","data":new_post}
 
 
+
 @app.delete("/posts/{id}")
-def delete_post(id:int):
-    cursor.execute("DELETE FROM posts WHERE post_id = %s RETURNING *",(id,))
-    response = cursor.fetchone()
-    conn.commit()
-    if response is None:
+def delete_post(id:int, db:Session  = Depends(get_db)):
+    post = db.query(Post_Schema).filter(Post_Schema.id == id)
+    if post.first() is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    post.delete(synchronize_session=False)
+    db.commit()
+    
     return {"message" :"post successfully deleted", "status":status.HTTP_204_NO_CONTENT}
     
 
 @app.put("/posts/{id}")
-def update_post(id : int, post:Post):
-    cursor.execute("UPDATE posts SET title=%s, content=%s, published=%s, ratings=%s WHERE post_id = %s RETURNING *" ,(post.title, post.content, post.published, post.rating, id))
-    response =cursor.fetchone()
-    conn.commit()
-    if response is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")    
-    return {'message':"updated post","data":response}
+def update_post(id : int, updated_post:Post, db:Session  = Depends(get_db)):
+    post_query =db.query(Post_Schema).filter(Post_Schema.id == id)
+    post = post_query.first()
+    
+    if post is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
+    
+    post_query.update(updated_post.dict(),synchronize_session=False)
+    db.commit()    
+    return {'message':"updated post","data":'successful'}
     
