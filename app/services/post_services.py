@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from models.post import Post
+from app.models.post import Post
 
 def get_all_posts(db:Session):
     return db.query(Post).all()

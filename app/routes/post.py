@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
-from schemas.post import Post, PostCreate
-from db.session import get_db
-from services import post_services as ps
+from app.schemas.post import Post, PostCreate
+from app.db.session import get_db
+from app.services import post_services as ps
 
 
 router = APIRouter()

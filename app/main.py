@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from db.session import engine
-from db.base import Base
-from routes import post, user
+from app.db.session import engine
+from app.db.base import Base
+from app.routes import post, user
 
 Base.metadata.create_all(bind=engine) 
 

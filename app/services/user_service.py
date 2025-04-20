@@ -1,17 +1,19 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from models.user import User
+from app.models.user import User
+from app.utils.security import verify_password, create_access_token, hash_password
 
 def get_all_users(db:Session):
     return db.query(User).all()
 
-def user_login(user, db):
-    user = db.query(User).filter(User.email == user.email).first()
+def user_login(request, db):
+    user = db.query(User).filter(User.email == request.email).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User with email not found")
-    elif user.password != user.password:
-        return {"message": "Incorrect password"}
-    return {"message":"Login successful"}
+    if not verify_password(request.password, user.password):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    token = create_access_token({"user_id": user.id})
+    return {"access_token": token}
     
 def get_user_by_id(id, db:Session):
     user = db.query(User).filter(User.id == id).first()
@@ -26,6 +28,7 @@ def create_user(user, db: Session):
     if user_exits:
         raise HTTPException(status_code=status.HTTP_208_ALREADY_REPORTED, detail="Email already exists" )
     new_user = User(**user.dict())
+    new_user.password = hash_password(new_user.password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

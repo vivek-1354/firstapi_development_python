@@ -4,7 +4,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     username: str
     email: str
-    password: int
+    password: str
     
     class Config:
         from_attributes = True
@@ -22,7 +22,12 @@ class User(BaseModel):
     created_at:datetime
     
 
-class UserLogin(BaseModel):
+class LoginRequest(BaseModel):
     email:str
-    password:int
+    password:str
+    
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
     

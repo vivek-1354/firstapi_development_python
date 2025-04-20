@@ -1,17 +1,17 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
-from schemas.user import User, UserCreate, UserLogin
-from db.session import get_db
-from services import post_services as ps
-from services import user_service as us
+from app.schemas.user import User, UserCreate, LoginRequest, TokenResponse
+from app.db.session import get_db
+from app.services import post_services as ps
+from app.services import user_service as us
 
 
 router = APIRouter()
 
 
-@router.post("/login")
-def login(user: UserLogin, db: Session = Depends(get_db)):
+@router.post("/login", response_model=TokenResponse)
+def login(user: LoginRequest, db: Session = Depends(get_db)):
     return us.user_login(user, db)
 
 
